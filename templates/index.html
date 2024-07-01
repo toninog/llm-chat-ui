@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Chatbot</h1>
+        <div class="chat-box" id="chat-box">
+            {% if past and generated %}
+                {% for user_msg, assistant_msg in past|zip(generated) %}
+                    <div class="user-message">{{ user_msg }}</div>
+                    <div class="assistant-message">{{ assistant_msg | safe }}</div>
+                {% endfor %}
+            {% else %}
+                <p>No conversation history.</p>
+            {% endif %}
+        </div>
+        <div class="spinner" id="spinner"></div>
+        <form action="{{ url_for('chat.send_chat') }}" method="POST" class="input-group" onsubmit="showSpinner()">
+            <textarea name="user_input" rows="3" placeholder="You:" onkeypress="return event.keyCode != 13;"></textarea>
+            <button type="submit">Send</button>
+        </form>
+        <div class="button-container">
+            <div class="button-group">
+                <button type="button" onclick="showPopup('link')">Link</button>
+                <button type="button" onclick="showPopup('image')">Image</button>
+                <button type="button" onclick="showPopup('audio')">Audio</button>
+                <button type="button" onclick="showPopup('video')">Video</button>
+                <form action="{{ url_for('new_chat') }}" method="GET">
+                    <button type="submit">New Chat</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popups for file uploads and link input -->
+    <div class="popup" id="popup-link">
+        <form action="{{ url_for('link.summarize_link') }}" method="POST" onsubmit="showSpinner()">
+            <label for="link-input">Enter Link:</label>
+            <input type="text" name="user_input" id="link-input" required>
+            <button type="submit">Submit</button>
+            <button type="button" onclick="hidePopup('link')">Cancel</button>
+        </form>
+    </div>
+    <div class="popup" id="popup-image">
+        <form action="{{ url_for('image.summarize_image') }}" method="POST" enctype="multipart/form-data" onsubmit="showSpinner()">
+            <label for="image-file">Upload Image:</label>
+            <input type="file" name="file" id="image-file" accept="image/*" required>
+            <button type="submit">Submit</button>
+            <button type="button" onclick="hidePopup('image')">Cancel</button>
+        </form>
+    </div>
+    <div class="popup" id="popup-audio">
+        <form action="{{ url_for('audio.summarize_audio') }}" method="POST" enctype="multipart/form-data" onsubmit="showSpinner()">
+            <label for="audio-file">Upload Audio:</label>
+            <input type="file" name="file" id="audio-file" accept="audio/*" required>
+            <button type="submit">Submit</button>
+            <button type="button" onclick="hidePopup('audio')">Cancel</button>
+        </form>
+    </div>
+    <div class="popup" id="popup-video">
+        <form action="{{ url_for('video.summarize_video') }}" method="POST" enctype="multipart/form-data" onsubmit="showSpinner()">
+            <label for="video-file">Upload Video:</label>
+            <input type="file" name="file" id="video-file" accept="video/*" required>
+            <button type="submit">Submit</button>
+            <button type="button" onclick="hidePopup('video')">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var chatBox = document.getElementById("chat-box");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        function showSpinner() {
+            document.getElementById("spinner").style.display = "block";
+        }
+
+        function hideSpinner() {
+            document.getElementById("spinner").style.display = "none";
+        }
+
+        function showPopup(type) {
+            document.getElementById("popup-" + type).style.display = "block";
+        }
+
+        function hidePopup(type) {
+            document.getElementById("popup-" + type).style.display = "none";
+        }
+
+        window.onload = function() {
+            var observer = new MutationObserver(function(mutations) {
+                var chatBox = document.getElementById("chat-box");
+                chatBox.scrollTop = chatBox.scrollHeight;
+                hideSpinner();
+            });
+
+            var config = { childList: true, subtree: true };
+
+            observer.observe(document.getElementById("chat-box"), config);
+        };
+
+        // Prevent default form submission on Enter key press in the textarea
+        document.querySelector('textarea[name="user_input"]').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.form.submit();
+            }
+        });
+    </script>
+</body>
+</html>
+
